@@ -30,18 +30,25 @@ Instant Hotspot also needs the phone's private address to work through the contr
 ## Install
 
 Paired test builds will be listed in the [Eric-AirportItlwm Releases](https://github.com/Ersiter/Eric-AirportItlwm/releases).
-Use the Wi-Fi and Bluetooth kexts from the same package for the system it names.
+For AirDrop testing with a paired package, use both kexts from the package for your macOS version.
 
 1. Replace `AirportItlwm.kext` and `BlueToolFixup.kext` in the EFI you boot.
 2. Keep Lilu and your Intel Bluetooth firmware configuration. Enable one `BlueToolFixup.kext` entry after Lilu in `Kernel → Add`.
 3. Boot from a test EFI and follow the package note for its boot arguments.
 
+For Bluetooth-only use, install `BlueToolFixup.kext` after Lilu with your Intel Bluetooth firmware setup.
+BlueToolFixup runs independently of AirportItlwm. AirDrop transfers also need working AWDL over Wi-Fi.
+
 ### Boot arguments
+
+On the current source, BlueToolFixup tries the LE advertising, scanning and RPA patches by default when
+their signatures match. `-itlawdl` enables AWDL in AirportItlwm. The Bluetooth defaults apply independently.
+Follow the package note when using an older build.
 
 | Argument | Effect |
 |---|---|
-| `-btlfxadvsets` | Enable the extended LE advertising and scanning patches when their signatures match. |
-| `-btlfxrpa` | Enable the private-address filter-list patches when their signatures match. |
+| `-btlfxadvsets` | Re-enable the LE advertising and scanning patches with `-btlfxnointel`. |
+| `-btlfxrpa` | Re-enable the private-address filter-list patches with `-btlfxnointel`. |
 | `-btlfxnointel` | Turn off the default Intel patches. Individual switches can still enable their own paths. |
 | `-btlfxoff` | Turn off BlueToolFixup. |
 

@@ -23,18 +23,24 @@ Sonoma 14、Sequoia 15、Tahoe 26 · x86_64 · Eric-AirportItlwm 的配套项目
 ## 安装
 
 配套测试包将在 [Eric-AirportItlwm Releases](https://github.com/Ersiter/Eric-AirportItlwm/releases) 列出。
-测试时，Wi-Fi 和蓝牙 kext 用对应系统的同一包版本。
+用配套包测试隔空投送时，Wi-Fi 和蓝牙 kext 都用对应系统的同一包版本。
 
 1. 在实际启动的 EFI 里替换 `AirportItlwm.kext` 和 `BlueToolFixup.kext`。
 2. 沿用 Lilu 和 Intel 蓝牙固件配置。在 `Kernel → Add` 里把唯一一条启用的 `BlueToolFixup.kext` 放在 Lilu 后面。
 3. 从测试用 EFI 启动，按包内说明设启动参数。
 
+只用蓝牙时，沿用 Intel 蓝牙固件配置，把 `BlueToolFixup.kext` 放在 Lilu 后面即可。
+BlueToolFixup 可独立于 AirportItlwm 运行。隔空投送传文件还需要 Wi-Fi 的 AWDL 正常工作。
+
 ### 启动参数
+
+当前源码默认在特征码命中时应用 LE 广播、扫描和 RPA 补丁。`-itlawdl` 开启 AirportItlwm 的
+AWDL，蓝牙补丁独立按自己的默认设置运行。旧版以随包说明为准。
 
 | 参数 | 作用 |
 |---|---|
-| `-btlfxadvsets` | 命中特征码时启用 LE 扩展广播和扫描补丁。 |
-| `-btlfxrpa` | 命中特征码时启用私有地址过滤列表补丁。 |
+| `-btlfxadvsets` | 搭配 `-btlfxnointel` 时，单独重新启用 LE 扩展广播和扫描补丁。 |
+| `-btlfxrpa` | 搭配 `-btlfxnointel` 时，单独重新启用私有地址过滤列表补丁。 |
 | `-btlfxnointel` | 关掉默认的 Intel 补丁，单项参数仍能打开对应功能。 |
 | `-btlfxoff` | 关闭 BlueToolFixup。 |
 
