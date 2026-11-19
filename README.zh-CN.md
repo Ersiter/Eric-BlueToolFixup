@@ -22,10 +22,11 @@ Sonoma 14、Sequoia 15、Tahoe 26 · x86_64 · Eric-AirportItlwm 的配套项目
 
 ## 安装
 
-配套测试包将在 [Eric-AirportItlwm Releases](https://github.com/Ersiter/Eric-AirportItlwm/releases) 列出。
-用配套包测试隔空投送时，Wi-Fi 和蓝牙 kext 都用对应系统的同一包版本。
+从 [Eric-BlueToolFixup Releases](https://github.com/Ersiter/Eric-BlueToolFixup/releases) 单独下载蓝牙 kext。
+同一份 x86_64 构建供该版本列出的 macOS 使用，Wi-Fi 驱动可以另外选。
+项目的 AWDL 测试包见 [Eric-AirportItlwm Releases](https://github.com/Ersiter/Eric-AirportItlwm/releases)。
 
-1. 在实际启动的 EFI 里替换 `AirportItlwm.kext` 和 `BlueToolFixup.kext`。
+1. 在实际启动的 EFI 里替换 `BlueToolFixup.kext`。使用社区配套测试包时，按包内说明替换两个 kext。
 2. 沿用 Lilu 和 Intel 蓝牙固件配置。在 `Kernel → Add` 里把唯一一条启用的 `BlueToolFixup.kext` 放在 Lilu 后面。
 3. 从测试用 EFI 启动，按包内说明设启动参数。
 
@@ -46,8 +47,8 @@ AWDL，蓝牙补丁独立按自己的默认设置运行。旧版以随包说明�
 
 ## 反馈问题
 
-运行包内指定的采集脚本，写明蓝牙控制器型号、macOS 构建号、kext 版本和复现过程。隔空投送请写明发送端和
-对端是否出现。蓝牙问题可以发到本仓库的 [Issue](https://github.com/Ersiter/Eric-BlueToolFixup/issues)。
+复现前运行 `Collect-EricWirelessDiagnostics.command`，选择蓝牙设备发现。写明蓝牙控制器型号、macOS 构建号
+及设备是否出现。含系统切片的 ZIP 请私下发送。蓝牙问题可以发到本仓库的 [Issue](https://github.com/Ersiter/Eric-BlueToolFixup/issues)。
 
 ## 编译
 

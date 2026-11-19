@@ -29,10 +29,11 @@ Instant Hotspot also needs the phone's private address to work through the contr
 
 ## Install
 
-Paired test builds will be listed in the [Eric-AirportItlwm Releases](https://github.com/Ersiter/Eric-AirportItlwm/releases).
-For AirDrop testing with a paired package, use both kexts from the package for your macOS version.
+Download the Bluetooth kext from [Eric-BlueToolFixup Releases](https://github.com/Ersiter/Eric-BlueToolFixup/releases).
+The x86_64 build is shared across the macOS versions listed for that release. Choose your Wi-Fi driver separately.
+For the project's AWDL test builds, see [Eric-AirportItlwm Releases](https://github.com/Ersiter/Eric-AirportItlwm/releases).
 
-1. Replace `AirportItlwm.kext` and `BlueToolFixup.kext` in the EFI you boot.
+1. Replace `BlueToolFixup.kext` in the EFI you boot. For a paired community test, use both kexts in that test ZIP.
 2. Keep Lilu and your Intel Bluetooth firmware configuration. Enable one `BlueToolFixup.kext` entry after Lilu in `Kernel → Add`.
 3. Boot from a test EFI and follow the package note for its boot arguments.
 
@@ -54,7 +55,8 @@ Follow the package note when using an older build.
 
 ## Reporting a problem
 
-Use the collector named in the package. Include your Bluetooth controller, macOS build, kext versions and what you did.
+Start `Collect-EricWirelessDiagnostics.command` before reproducing and select Bluetooth device discovery.
+Include your Bluetooth controller, macOS build and what you saw. Send the ZIP privately if it includes a system binary.
 For AirDrop, say which device was sending and whether the other device appeared. Report Bluetooth problems in
 [Issues](https://github.com/Ersiter/Eric-BlueToolFixup/issues).
 
