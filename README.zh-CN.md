@@ -18,7 +18,7 @@ Sonoma 14、Sequoia 15、Tahoe 26 · x86_64 · Eric-AirportItlwm 的配套项目
 | LE 扩展广播与扫描 | macOS 26 Tahoe | 🧪 已核对两版的补丁字节，当前改动待上机。 |
 | LE 扩展广播与扫描 | macOS 15 Sequoia、macOS 14 Sonoma | 🧪 已按 15.8 系列和 14.8.9 补齐特征码，待端到端验证。 |
 | 即时热点私有地址连接 | macOS 26 Tahoe | 🧪 RPA 地址推导已离线核对，待验证热点加入和重连。 |
-| `bluetoothd` 的 APFS 分页 SIGBUS 修复 | macOS 26 Tahoe | 🧪 工作源码已实现，待构建和实机验证。 |
+| `bluetoothd` 的 APFS 分页 SIGBUS 修复 | macOS 26 Tahoe | 🧪 x86_64 Debug 已构建核验，待实机。 |
 
 ## 安装
 
@@ -49,6 +49,25 @@ AWDL，蓝牙补丁独立按自己的默认设置运行。旧版以随包说明�
 运行包内指定的采集脚本，写明蓝牙控制器型号、macOS 构建号、kext 版本和复现过程。隔空投送请写明发送端和
 对端是否出现。蓝牙问题可以发到本仓库的 [Issue](https://github.com/Ersiter/Eric-BlueToolFixup/issues)。
 
+## 编译
+
+在 macOS 上使用 Xcode。解压 [Lilu 1.7.2 Debug](https://github.com/acidanthera/Lilu/releases/tag/1.7.2) 取得头文件和库，然后从本仓库根目录执行。
+
+```sh
+mkdir -p build
+git clone https://github.com/acidanthera/BrcmPatchRAM.git build/BrcmPatchRAM
+git -C build/BrcmPatchRAM checkout --detach 65389020769837e92e9fb939bac34bd9a3e25bb2
+git clone https://github.com/acidanthera/MacKernelSDK.git build/BrcmPatchRAM/MacKernelSDK
+git -C build/BrcmPatchRAM/MacKernelSDK checkout --detach 3f750085caa17ec3a7880f11c11bf4f48cd6a164
+cp -R /path/to/Lilu.kext build/BrcmPatchRAM/
+cp src/BlueToolFixup.cpp src/BtdRpaDerive.hpp build/BrcmPatchRAM/BrcmPatchRAM/
+cd build/BrcmPatchRAM
+xcodebuild -project BrcmPatchRAM.xcodeproj -target BlueToolFixup -configuration Debug \
+  ARCHS=x86_64 CODE_SIGNING_ALLOWED=NO SYMROOT="$PWD/products" OBJROOT="$PWD/obj" build
+```
+
+kext 在构建目录下的 `products/Debug/BlueToolFixup.kext`。
+
 ## 源流
 
 [Acidanthera/BrcmPatchRAM](https://github.com/acidanthera/BrcmPatchRAM) → Dhinak G 的 BlueToolFixup
@@ -60,3 +79,8 @@ AWDL，蓝牙补丁独立按自己的默认设置运行。旧版以随包说明�
 - [crazyhulk](https://github.com/crazyhulk) 与 [ForbiddenItlwm](https://github.com/retropineaple/ForbiddenItlwm)：BLE 补丁参考。
 - [IntelBTUnified](https://github.com/laguillo/IntelBTUnified/releases/tag/v1.0.1)：压缩页 SIGBUS 的诊断和处理思路。
 - [OpenIntelWireless](https://github.com/OpenIntelWireless/IntelBluetoothFirmware) 与贡献者：Intel 蓝牙固件加载和 HCI 补丁。
+
+## 许可
+
+BlueToolFixup 基础代码沿用 [BrcmPatchRAM 的 GPL-2.0 许可证](LICENSES/BrcmPatchRAM-GPL-2.0.txt)。
+第三方补丁参考在相应源码位置署名。

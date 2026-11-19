@@ -25,7 +25,7 @@ Instant Hotspot also needs the phone's private address to work through the contr
 | Extended LE advertising and scanning | macOS 26 Tahoe | 🧪 Patch bytes checked against two builds. Hardware validation of the current revision is pending. |
 | Extended LE advertising and scanning | macOS 15 Sequoia, macOS 14 Sonoma | 🧪 Patterns adapted from the 15.8 series and 14.8.9. End-to-end testing is pending. |
 | Private-address connection for Instant Hotspot | macOS 26 Tahoe | 🧪 RPA address derivation checked offline. Hotspot join and reconnect are pending. |
-| APFS page-in fix for `bluetoothd` SIGBUS | macOS 26 Tahoe | 🧪 Implemented in the working source. Build and hardware verification are pending. |
+| APFS page-in fix for `bluetoothd` SIGBUS | macOS 26 Tahoe | 🧪 x86_64 Debug build verified. Hardware testing is pending. |
 
 ## Install
 
@@ -58,6 +58,25 @@ Use the collector named in the package. Include your Bluetooth controller, macOS
 For AirDrop, say which device was sending and whether the other device appeared. Report Bluetooth problems in
 [Issues](https://github.com/Ersiter/Eric-BlueToolFixup/issues).
 
+## Build
+
+Use Xcode on macOS. Extract [Lilu 1.7.2 Debug](https://github.com/acidanthera/Lilu/releases/tag/1.7.2) for its build headers and libraries. Run this from the repository root.
+
+```sh
+mkdir -p build
+git clone https://github.com/acidanthera/BrcmPatchRAM.git build/BrcmPatchRAM
+git -C build/BrcmPatchRAM checkout --detach 65389020769837e92e9fb939bac34bd9a3e25bb2
+git clone https://github.com/acidanthera/MacKernelSDK.git build/BrcmPatchRAM/MacKernelSDK
+git -C build/BrcmPatchRAM/MacKernelSDK checkout --detach 3f750085caa17ec3a7880f11c11bf4f48cd6a164
+cp -R /path/to/Lilu.kext build/BrcmPatchRAM/
+cp src/BlueToolFixup.cpp src/BtdRpaDerive.hpp build/BrcmPatchRAM/BrcmPatchRAM/
+cd build/BrcmPatchRAM
+xcodebuild -project BrcmPatchRAM.xcodeproj -target BlueToolFixup -configuration Debug \
+  ARCHS=x86_64 CODE_SIGNING_ALLOWED=NO SYMROOT="$PWD/products" OBJROOT="$PWD/obj" build
+```
+
+The kext is in `products/Debug/BlueToolFixup.kext` in the build tree.
+
 ## Lineage
 
 [Acidanthera/BrcmPatchRAM](https://github.com/acidanthera/BrcmPatchRAM) → BlueToolFixup by Dhinak G → this project,
@@ -69,3 +88,8 @@ with the BLE changes needed by Eric-AirportItlwm on Intel Bluetooth.
 - [crazyhulk](https://github.com/crazyhulk) and [ForbiddenItlwm](https://github.com/retropineaple/ForbiddenItlwm) for the BLE patch references.
 - [IntelBTUnified](https://github.com/laguillo/IntelBTUnified/releases/tag/v1.0.1) for the compressed-page SIGBUS diagnosis and workaround.
 - [OpenIntelWireless](https://github.com/OpenIntelWireless/IntelBluetoothFirmware) and contributors for Intel Bluetooth firmware loading and HCI patches.
+
+## License
+
+The BlueToolFixup base retains [BrcmPatchRAM's GPL-2.0 license](LICENSES/BrcmPatchRAM-GPL-2.0.txt).
+Third-party patch references are credited at the relevant source sites.
