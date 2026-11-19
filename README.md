@@ -5,6 +5,7 @@
 Sonoma 14, Sequoia 15 and Tahoe 26 · x86_64 · a companion to Eric-AirportItlwm</p>
 
 <p align="center">
+<a href="https://github.com/Ersiter/Eric-BlueToolFixup/releases/latest"><img src="https://img.shields.io/github/v/release/Ersiter/Eric-BlueToolFixup?label=release" alt="Latest release"></a>
 <img src="https://img.shields.io/badge/status-in%20development-orange" alt="In development">
 <img src="https://img.shields.io/badge/macOS-26%20Tahoe%20%7C%2015%20Sequoia%20%7C%2014%20Sonoma-blue" alt="Target macOS versions">
 <img src="https://img.shields.io/badge/arch-x86__64-lightgrey" alt="x86_64">
