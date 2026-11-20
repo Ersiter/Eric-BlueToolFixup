@@ -69,7 +69,7 @@ xcodebuild -project BrcmPatchRAM.xcodeproj -target BlueToolFixup -configuration 
   ARCHS=x86_64 CODE_SIGNING_ALLOWED=NO SYMROOT="$PWD/products" OBJROOT="$PWD/obj" build
 ```
 
-kext 在构建目录下的 `products/Debug/BlueToolFixup.kext`。
+kext 在构建目录下的 `products/Debug/BlueToolFixup.kext`。发布的 Release 包用 `-configuration Release GCC_GENERATE_DEBUGGING_SYMBOLS=NO` 构建，再对可执行文件运行 `strip -x`：去掉调试信息和本地符号，代码不变。
 
 ## 源流
 

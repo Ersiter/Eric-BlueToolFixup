@@ -80,7 +80,7 @@ xcodebuild -project BrcmPatchRAM.xcodeproj -target BlueToolFixup -configuration 
   ARCHS=x86_64 CODE_SIGNING_ALLOWED=NO SYMROOT="$PWD/products" OBJROOT="$PWD/obj" build
 ```
 
-The kext is in `products/Debug/BlueToolFixup.kext` in the build tree.
+The kext is in `products/Debug/BlueToolFixup.kext` in the build tree. The Release asset is built with `-configuration Release GCC_GENERATE_DEBUGGING_SYMBOLS=NO` and its binary is passed through `strip -x`, which removes debug information and local symbols and leaves the code unchanged.
 
 ## Lineage
 
