@@ -2,7 +2,7 @@
 
 <h1 align="center">Eric-BlueToolFixup</h1>
 <p align="center"><b>Intel Bluetooth LE for AirDrop and Instant Hotspot on macOS</b><br>
-Sonoma 14, Sequoia 15 and Tahoe 26 · x86_64 · a companion to Eric-AirportItlwm</p>
+Sonoma 14, Sequoia 15, Tahoe 26 and macOS 27 · x86_64 · a companion to Eric-AirportItlwm</p>
 
 <p align="center">
 <a href="https://github.com/Ersiter/Eric-BlueToolFixup/releases/latest"><img src="https://img.shields.io/github/v/release/Ersiter/Eric-BlueToolFixup?label=release" alt="Latest release"></a>
@@ -24,9 +24,11 @@ Instant Hotspot also needs the phone's private address to work through the contr
 | Feature | System | Status |
 |---|---|---|
 | Extended LE advertising and scanning | macOS 26 Tahoe | 🧪 Patch bytes checked against two builds. Hardware validation of the current revision is pending. |
-| Extended LE advertising and scanning | macOS 15 Sequoia, macOS 14 Sonoma | 🧪 Patterns adapted from the 15.8 series and 14.8.9. End-to-end testing is pending. |
-| Private-address connection for Instant Hotspot | macOS 26 Tahoe | 🧪 RPA address derivation checked offline. Hotspot join and reconnect are pending. |
-| APFS page-in fix for `bluetoothd` SIGBUS | macOS 26 Tahoe | 🧪 x86_64 Debug build verified. Hardware testing is pending. |
+| Extended LE advertising and scanning | macOS 15 Sequoia | 🧪 Patterns adapted from the 15.8 series. End-to-end testing is pending. |
+| Extended LE advertising and scanning | macOS 14 Sonoma | 🧪 Patterns adapted from 14.8.9 and checked against bluetoothd 14.6.1. End-to-end testing is pending. |
+| Extended LE advertising and scanning | macOS 27 | 🧪 Sites found in bluetoothd 27.2.1 and checked offline. End-to-end testing is pending. |
+| Private-address connection for Instant Hotspot | macOS 26 Tahoe, macOS 14 Sonoma, macOS 27 | 🧪 RPA address derivation checked offline on 25E246, 25G229, 14.6.1 and 27.2.1. Hotspot join and reconnect are pending. |
+| APFS page-in fix for `bluetoothd` SIGBUS | macOS 26 Tahoe, macOS 27 | 🧪 x86_64 Debug build verified. Hardware testing is pending. |
 
 ## Install
 

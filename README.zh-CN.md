@@ -2,7 +2,7 @@
 
 <h1 align="center">Eric-BlueToolFixup</h1>
 <p align="center"><b>给 macOS 上的 Intel 蓝牙接通隔空投送和即时热点所需的 BLE 功能</b><br>
-Sonoma 14、Sequoia 15、Tahoe 26 · x86_64 · Eric-AirportItlwm 的配套项目</p>
+Sonoma 14、Sequoia 15、Tahoe 26、macOS 27 · x86_64 · Eric-AirportItlwm 的配套项目</p>
 
 <p align="center"><a href="README.md">English</a></p>
 
@@ -16,9 +16,11 @@ Sonoma 14、Sequoia 15、Tahoe 26 · x86_64 · Eric-AirportItlwm 的配套项目
 | 功能 | 系统 | 状态 |
 |---|---|---|
 | LE 扩展广播与扫描 | macOS 26 Tahoe | 🧪 已核对两版的补丁字节，当前改动待上机。 |
-| LE 扩展广播与扫描 | macOS 15 Sequoia、macOS 14 Sonoma | 🧪 已按 15.8 系列和 14.8.9 补齐特征码，待端到端验证。 |
-| 即时热点私有地址连接 | macOS 26 Tahoe | 🧪 RPA 地址推导已离线核对，待验证热点加入和重连。 |
-| `bluetoothd` 的 APFS 分页 SIGBUS 修复 | macOS 26 Tahoe | 🧪 x86_64 Debug 已构建核验，待实机。 |
+| LE 扩展广播与扫描 | macOS 15 Sequoia | 🧪 已按 15.8 系列补齐特征码，待端到端验证。 |
+| LE 扩展广播与扫描 | macOS 14 Sonoma | 🧪 已按 14.8.9 补齐特征码，并在 14.6.1 的 bluetoothd 上核对，待端到端验证。 |
+| LE 扩展广播与扫描 | macOS 27 | 🧪 已在 27.2.1 的 bluetoothd 里找到对应位置并离线核对，待端到端验证。 |
+| 即时热点私有地址连接 | macOS 26 Tahoe、macOS 14 Sonoma、macOS 27 | 🧪 RPA 地址推导已在 25E246、25G229、14.6.1、27.2.1 上离线核对，待验证热点加入和重连。 |
+| `bluetoothd` 的 APFS 分页 SIGBUS 修复 | macOS 26 Tahoe、macOS 27 | 🧪 x86_64 Debug 已构建核验，待实机。 |
 
 ## 安装
 
