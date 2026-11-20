@@ -440,8 +440,9 @@ static const uint8_t kSeqResendReplaceMask[] =
 // Kaixi2004/AirportIntel (GPL-3.0; its provenance is to be settled before release), which read them from Apple's
 // installer and matched them by the same log strings. The capability queries are vtable slots 0x700 and 0x770, the
 // chipset field is at 0x2c4, the failed check's je is 0x134 and the "ja" jumps 0x23. The call displacements are not compared,
-// except in the extended create connection site, which has too little around it to be specific without them: it
-// matches 14.8.9 only. Not checked against a bluetoothd of our own: each applied site logs "(Sonoma)".
+// except in the first extended create connection site, which has too little around it to be specific without them: it
+// matches 14.8.9 only. Checked against bluetoothd 14.6.1 (23G93), read from Apple's IPSW: the first three sites match once
+// each, the extended create connection site has its own entry below. Each applied site logs "(Sonoma)".
 static const uint8_t kSonAdvCapFind[] =
 {
     0x84, 0xC0, 0x0F, 0x84, 0x34, 0x01, 0x00, 0x00, 0xE8, 0x00, 0x00, 0x00, 0x00,
@@ -482,6 +483,80 @@ static const uint8_t kSonExtConnReplace[] =
 static const uint8_t kSonExtConnReplaceMask[] =
 {
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+// Extended create connection in 14.6.1 (23G93), where the exact bytes above do not match (the call displacement differs):
+// movzx edi, byte [rbp-X]; call setter; or r15b, bl; movzx r15d, r15b; mov edi, r15d; call. The setter is the one that
+// stores gEnableExtendedCreateConnectionCommand; the local's offset and the call displacement are open.
+static const uint8_t kSonExtConnShapeFind[] =
+{
+    0x0F, 0xB6, 0xBD, 0x00, 0xFF, 0xFF, 0xFF, 0xE8, 0x00, 0x00, 0x00, 0x00,
+    0x41, 0x08, 0xDF, 0x45, 0x0F, 0xB6, 0xFF, 0x44, 0x89, 0xFF, 0xE8
+};
+static const uint8_t kSonExtConnShapeFindMask[] =
+{
+    0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+};
+static const uint8_t kSonExtConnShapeReplace[] =
+{
+    0xBF, 0x01, 0x00, 0x00, 0x00, 0x90, 0x90, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+static const uint8_t kSonExtConnShapeReplaceMask[] =
+{
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+// macOS 27 (Golden Gate, 27.2.1 = 26B131): the same sites, found from the same log strings. The queries are vtable slots
+// 0xa30 (extended advertising sets) and 0xac0 (extended scans); BT Spec advertising sets (0xad8) stay native, as on Tahoe.
+// The failed check's je is 0x15c and 0x15f, so its displacement is open (find mask 0 in bytes 4-5). The chipset field is at
+// 0x368 and its "ja" jumps 0x3f; the extended create connection argument is a register (r13b), not a stack slot.
+static const uint8_t kGgAdvCapFind[] =
+{
+    0x84, 0xC0, 0x0F, 0x84, 0x00, 0x00, 0x00, 0x00, 0xE8, 0x00, 0x00, 0x00, 0x00,
+    0x48, 0x8B, 0x08, 0x48, 0x89, 0xC7, 0xFF, 0x91, 0x30, 0x0A, 0x00, 0x00, 0x41, 0x89, 0xC6
+};
+static const uint8_t kGgScanCapFind[] =
+{
+    0x84, 0xC0, 0x0F, 0x84, 0x00, 0x00, 0x00, 0x00, 0xE8, 0x00, 0x00, 0x00, 0x00,
+    0x48, 0x8B, 0x08, 0x48, 0x89, 0xC7, 0xFF, 0x91, 0xC0, 0x0A, 0x00, 0x00, 0x41, 0x89, 0xC6
+};
+static const uint8_t kGgCapFindMask[] =
+{
+    0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00,
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
+};
+// cmp dword [rax+X], 3; ja Y; xor edi, edi; call: X and Y are open, the xor and the call become nops (as kSeqAddrReplace)
+static const uint8_t kGgAddrFind[] =
+{
+    0x83, 0xB8, 0x00, 0x00, 0x00, 0x00, 0x03, 0x77, 0x00, 0x31, 0xFF, 0xE8, 0x00, 0x00, 0x00, 0x00
+};
+static const uint8_t kGgAddrFindMask[] =
+{
+    0xFF, 0xFF, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00
+};
+// movzx edi, r13b; call setter; movzx edi, byte [rbp-X]; mov [rbp-Y], edi; call -> push 1; pop rdi; nop; call setter
+static const uint8_t kGgExtConnFind[] =
+{
+    0x41, 0x0F, 0xB6, 0xFD, 0xE8, 0x00, 0x00, 0x00, 0x00, 0x0F, 0xB6, 0xBD, 0x00, 0xFF, 0xFF, 0xFF,
+    0x89, 0xBD, 0x00, 0xFF, 0xFF, 0xFF, 0xE8
+};
+static const uint8_t kGgExtConnFindMask[] =
+{
+    0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF,
+    0xFF, 0xFF, 0x00, 0xFF, 0xFF, 0xFF, 0xFF
+};
+static const uint8_t kGgExtConnReplace[] =
+{
+    0x6A, 0x01, 0x5F, 0x90, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+static const uint8_t kGgExtConnReplaceMask[] =
+{
+    0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
 // Tahoe 25.4 / 25E246 command descriptor: require an unavailable capability
@@ -695,7 +770,7 @@ static void routePageinInvalidation(KernelPatcher &patcher) {
         SYSLOG(MODULE_SHORT, "[pagein] failed to route vnode_pagein");
         return;
     }
-    SYSLOG(MODULE_SHORT, "[pagein] Tahoe patched-page invalidation enabled");
+    SYSLOG(MODULE_SHORT, "[pagein] patched-page invalidation enabled (Tahoe and later)");
 }
 
 #pragma mark - Kernel patching code
@@ -822,51 +897,56 @@ static void patched_cs_validate_page(vnode_t vp, memory_object_t pager, memory_o
                 patched = true;
                 SYSLOG(MODULE_SHORT, "[advsets] patched extended scanning capability in %s", path);
             }
-            if (shouldPatchSpecAdvSets && getKernelVersion() == KernelVersion::Sequoia) {
+            if (shouldPatchSpecAdvSets) {
                 // The needle of a masked search is the pattern with its wildcards zeroed (Lilu compares data & mask).
-                auto seq = [&](const char *name, const uint8_t *find, size_t size, const uint8_t *findMask,
-                               const uint8_t *replace, const uint8_t *replaceMask) {
+                auto site = [&](const char *tag, const char *name, const uint8_t *find, size_t size, const uint8_t *findMask,
+                                const uint8_t *replace, const uint8_t *replaceMask) {
                     uint8_t needle[32];
                     for (size_t i = 0; i < size; i++)
                         needle[i] = find[i] & findMask[i];
                     if (KernelPatcher::findAndReplaceWithMask(const_cast<void *>(data), PAGE_SIZE, needle, size, findMask, size,
                                                               replace, size, replaceMask, size)) {
                         patched = true;
-                        SYSLOG(MODULE_SHORT, "[advsets] patched %s in %s (Sequoia)", name, path);
+                        SYSLOG(MODULE_SHORT, "[advsets] patched %s in %s (%s)", name, path, tag);
                     }
                 };
-                seq("extended advertising sets capability", kSeqAdvCapFind, sizeof(kSeqAdvCapFind), kSeqCapFindMask,
-                    kExtendedCapReplace, kSeqCapReplaceMask);
-                seq("extended scanning capability", kSeqScanCapFind, sizeof(kSeqScanCapFind), kSeqCapFindMask,
-                    kExtendedCapReplace, kSeqCapReplaceMask);
-                seq("advertising set random address", kSeqAddrFind, sizeof(kSeqAddrFind), kSeqAddrFindMask,
-                    kSeqAddrReplace, kSeqAddrReplaceMask);
-                seq("advertising set address resend", kSeqResendFind, sizeof(kSeqResendFind), kSeqResendFindMask,
-                    kSeqResendReplace, kSeqResendReplaceMask);
-            }
-            if (shouldPatchSpecAdvSets && getKernelVersion() == KernelVersion::Sonoma) {
-                auto son = [&](const char *name, const uint8_t *find, size_t size, const uint8_t *findMask,
-                               const uint8_t *replace, const uint8_t *replaceMask) {
-                    uint8_t needle[32];
-                    for (size_t i = 0; i < size; i++)
-                        needle[i] = find[i] & findMask[i];
-                    if (KernelPatcher::findAndReplaceWithMask(const_cast<void *>(data), PAGE_SIZE, needle, size, findMask, size,
-                                                              replace, size, replaceMask, size)) {
-                        patched = true;
-                        SYSLOG(MODULE_SHORT, "[advsets] patched %s in %s (Sonoma)", name, path);
-                    }
-                };
-                son("extended advertising sets capability", kSonAdvCapFind, sizeof(kSonAdvCapFind), kSeqCapFindMask,
-                    kSonAdvCapReplace, kSeqCapReplaceMask);
-                son("extended scanning capability", kSonScanCapFind, sizeof(kSonScanCapFind), kSeqCapFindMask,
-                    kSonScanCapReplace, kSeqCapReplaceMask);
-                son("advertising set random address", kSonAddrFind, sizeof(kSonAddrFind), kSeqAddrFindMask,
-                    kSonAddrReplace, kSeqAddrReplaceMask);
-                // fixed displacement: an exact find, a replace mask that leaves the displacement alone
-                static const uint8_t extConnFindMask[sizeof(kSonExtConnFind)] =
-                    { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-                son("extended create connection", kSonExtConnFind, sizeof(kSonExtConnFind), extConnFindMask,
-                    kSonExtConnReplace, kSonExtConnReplaceMask);
+                const KernelVersion kernel = getKernelVersion();
+                if (kernel == KernelVersion::Sequoia) {
+                    site("Sequoia", "extended advertising sets capability", kSeqAdvCapFind, sizeof(kSeqAdvCapFind), kSeqCapFindMask,
+                         kExtendedCapReplace, kSeqCapReplaceMask);
+                    site("Sequoia", "extended scanning capability", kSeqScanCapFind, sizeof(kSeqScanCapFind), kSeqCapFindMask,
+                         kExtendedCapReplace, kSeqCapReplaceMask);
+                    site("Sequoia", "advertising set random address", kSeqAddrFind, sizeof(kSeqAddrFind), kSeqAddrFindMask,
+                         kSeqAddrReplace, kSeqAddrReplaceMask);
+                    site("Sequoia", "advertising set address resend", kSeqResendFind, sizeof(kSeqResendFind), kSeqResendFindMask,
+                         kSeqResendReplace, kSeqResendReplaceMask);
+                }
+                if (kernel == KernelVersion::Sonoma) {
+                    site("Sonoma", "extended advertising sets capability", kSonAdvCapFind, sizeof(kSonAdvCapFind), kSeqCapFindMask,
+                         kSonAdvCapReplace, kSeqCapReplaceMask);
+                    site("Sonoma", "extended scanning capability", kSonScanCapFind, sizeof(kSonScanCapFind), kSeqCapFindMask,
+                         kSonScanCapReplace, kSeqCapReplaceMask);
+                    site("Sonoma", "advertising set random address", kSonAddrFind, sizeof(kSonAddrFind), kSeqAddrFindMask,
+                         kSonAddrReplace, kSeqAddrReplaceMask);
+                    // fixed displacement: an exact find, a replace mask that leaves the displacement alone
+                    static const uint8_t extConnFindMask[sizeof(kSonExtConnFind)] =
+                        { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+                    site("Sonoma", "extended create connection", kSonExtConnFind, sizeof(kSonExtConnFind), extConnFindMask,
+                         kSonExtConnReplace, kSonExtConnReplaceMask);
+                    site("Sonoma", "extended create connection", kSonExtConnShapeFind, sizeof(kSonExtConnShapeFind),
+                         kSonExtConnShapeFindMask, kSonExtConnShapeReplace, kSonExtConnShapeReplaceMask);
+                }
+                // Lilu's enum ends at Tahoe (25); macOS 27 reports Darwin 27
+                if (kernel >= static_cast<KernelVersion>(27)) {
+                    site("macOS 27", "extended advertising sets capability", kGgAdvCapFind, sizeof(kGgAdvCapFind), kGgCapFindMask,
+                         kExtendedCapReplace, kSeqCapReplaceMask);
+                    site("macOS 27", "extended scanning capability", kGgScanCapFind, sizeof(kGgScanCapFind), kGgCapFindMask,
+                         kExtendedCapReplace, kSeqCapReplaceMask);
+                    site("macOS 27", "advertising set random address", kGgAddrFind, sizeof(kGgAddrFind), kGgAddrFindMask,
+                         kSeqAddrReplace, kSeqAddrReplaceMask);
+                    site("macOS 27", "extended create connection", kGgExtConnFind, sizeof(kGgExtConnFind), kGgExtConnFindMask,
+                         kGgExtConnReplace, kGgExtConnReplaceMask);
+                }
             }
             if (shouldPatchRpa)
                 patched |= patchRpaFilterAcceptList(const_cast<void *>(data), page_offset, path);
@@ -920,7 +1000,7 @@ static void pluginStart() {
         shouldPatchRpa = intelAirDrop || checkKernelArgument("-btlfxrpa");
         if (shouldPatchRpa)
             SYSLOG(MODULE_SHORT, "[rpa] Filter Accept List RPA substitution for third-party controllers enabled");
-        if (getKernelVersion() == KernelVersion::Tahoe)
+        if (getKernelVersion() >= KernelVersion::Tahoe)
             routePageinInvalidation(patcher);
         KernelPatcher::RouteRequest csRoute = KernelPatcher::RouteRequest("_cs_validate_page", patched_cs_validate_page, orig_cs_validate);
         if (!patcher.routeMultipleLong(KernelPatcher::KernelID, &csRoute, 1))

@@ -104,6 +104,11 @@ static const char *const kHook = "42 8A 44 20 FF 41 88 46 06 66 41 89 56 04 41 8
 static const char *const kSave =
     "BF 01 00 00 00 BE 43 00 00 00 E8 ?? ?? ?? ?? 84 C0 74 ?? 48 8D 3D ?? ?? ?? ?? 31 DB 31 C0 E8 ?? ?? ?? ?? BF 43 00 "
     "00 00 E8 ?? ?? ?? ?? 49 89 C6 48 89 C7 BE";
+// macOS 14 (14.6.1 checked): the same function, but the compiler put "xor ebx, ebx" right after the first call and ends the
+// block with a jump (newer builds end it with the "xor ebx, ebx" that the cache writer's skip lands on).
+static const char *const kSaveSonoma =
+    "BF 01 00 00 00 BE 43 00 00 00 E8 ?? ?? ?? ?? 31 DB 84 C0 74 ?? 48 8D 3D ?? ?? ?? ?? 31 DB 31 C0 E8 ?? ?? ?? ?? BF 43 00 "
+    "00 00 E8 ?? ?? ?? ?? 49 89 C6 48 89 C7 BE";
 static const char *const kAdd = "49 89 C6 41 0F B6 17 49 8D 4F 01 48 8D 35 ?? ?? ?? ??";
 static const char *const kRemove = "48 89 C3 41 0F B6 17 49 8D 4F 01 48 8D 35 ?? ?? ?? ??";
 static const char *const kHelper =
@@ -188,9 +193,9 @@ struct Report {
 // pageOffset is the offset cs_validate_page reported for the page; layout comes from parseHeader.
 inline Outcome derivePage(uint8_t *page, size_t pageSize, uint64_t pageOffset, const Layout &layout, Report *report) {
     // parsed on every call: a function-local static would need the compiler's guard, which a kext does not have
-    const Sig hook = parseSig(kHook), save = parseSig(kSave), add = parseSig(kAdd), remove = parseSig(kRemove),
-              helper = parseSig(kHelper);
-    size_t hookAt = 0, saveAt = 0, addAt = 0, removeAt = 0, helperAt = 0;
+    const Sig hook = parseSig(kHook), save = parseSig(kSave), saveSonoma = parseSig(kSaveSonoma), add = parseSig(kAdd),
+              remove = parseSig(kRemove), helper = parseSig(kHelper);
+    size_t hookAt = 0, saveAt = 0, saveSonomaAt = 0, addAt = 0, removeAt = 0, helperAt = 0;
     size_t hooks = countSig(page, pageSize, hook, &hookAt);
     size_t helpers = countSig(page, pageSize, helper, &helperAt);
     if (!hooks && !helpers)
@@ -206,31 +211,41 @@ inline Outcome derivePage(uint8_t *page, size_t pageSize, uint64_t pageOffset, c
 
     if (hooks) {
         size_t saves = countSig(page, pageSize, save, &saveAt);
-        if (hooks != 1 || saves != 1)
+        size_t savesSonoma = countSig(page, pageSize, saveSonoma, &saveSonomaAt);
+        const bool sonoma = saves == 0 && savesSonoma == 1;
+        if (sonoma)
+            saveAt = saveSonomaAt;
+        if (hooks != 1 || saves + savesSonoma != 1)
             result = Outcome::Incomplete;
         else if (!placed)
             result = Outcome::NoLayout;
         else if (!layout.cacheFits)
             result = Outcome::NoCacheRoom;
-        else if (saveAt + 0x7a > pageSize || memcmp(page + saveAt + 0x78, "\x31\xdb", 2) != 0 ||
+        else if (saveAt + 0x7d > pageSize ||
+                 (sonoma ? page[saveAt + 0x78] != 0xE9 : memcmp(page + saveAt + 0x78, "\x31\xdb", 2) != 0) ||
                  memcmp(page + hookAt + 14, "\x41\x89\x0E\xC6\x03\x01", 6) != 0)
             result = Outcome::Unexpected;
         else {
             uint64_t hookVA = pageVA + hookAt, saveVA = pageVA + saveAt;
-            // the resolver's hook calls into the cache writer at the writer's second instruction
+            // the resolver's hook calls into the cache writer, behind the skip that the block's own entry takes
+            const size_t skip = sonoma ? 4 : 2;
             uint8_t *h = page + hookAt + 14;
             h[0] = 0xE8;
-            put32(h + 1, (int64_t)(saveVA + 2) - (int64_t)(hookVA + 19));
+            put32(h + 1, (int64_t)(saveVA + skip) - (int64_t)(hookVA + 19));
             h[5] = 0x90;
-            // the cache writer: skips to the original "xor ebx, ebx" return, then stores the identity and RPA in a slot
+            // the cache writer: its entry skips to the block's return (0x78 on: "xor ebx, ebx", or a jump to the epilogue
+            // after clearing ebx on 14), then it stores the identity and RPA in a slot
             uint8_t *s = page + saveAt;
-            static const uint8_t head[] = {0xEB, 0x76, 0x41, 0x89, 0x0E, 0xC6, 0x03, 0x01, 0x44, 0x89, 0xE8, 0x83, 0xE0, 0x0F,
+            static const uint8_t prefixNew[] = {0xEB, 0x76};
+            static const uint8_t prefixSonoma[] = {0x31, 0xDB, 0xEB, 0x74};
+            static const uint8_t head[] = {0x41, 0x89, 0x0E, 0xC6, 0x03, 0x01, 0x44, 0x89, 0xE8, 0x83, 0xE0, 0x0F,
                                            0x48, 0x8D, 0x04, 0x40, 0x48, 0x8D, 0x15};
             static const uint8_t tail[] = {0x48, 0x8D, 0x04, 0xC2, 0x89, 0x08, 0x41, 0x8B, 0x4E, 0x03, 0x89, 0x48, 0x03,
                                            0x41, 0x8B, 0x0F, 0x89, 0x48, 0x08, 0x41, 0x8B, 0x4F, 0x03, 0x89, 0x48, 0x0B, 0xC3};
-            memcpy(s, head, sizeof(head));
-            put32(s + 21, (int64_t)layout.cacheVA - (int64_t)(saveVA + 25));
-            memcpy(s + 25, tail, sizeof(tail));
+            memcpy(s, sonoma ? prefixSonoma : prefixNew, skip);
+            memcpy(s + skip, head, sizeof(head));
+            put32(s + skip + sizeof(head), (int64_t)layout.cacheVA - (int64_t)(saveVA + skip + sizeof(head) + 4));
+            memcpy(s + skip + sizeof(head) + 4, tail, sizeof(tail));
             if (report) {
                 report->resolver = true;
                 report->hook = hookVA;
