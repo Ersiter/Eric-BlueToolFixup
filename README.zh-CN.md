@@ -37,11 +37,12 @@ BlueToolFixup 可独立于 AirportItlwm 运行。隔空投送传文件还需要 
 
 ### 启动参数
 
-当前源码默认在特征码命中时应用 LE 广播、扫描和 RPA 补丁。`-itlawdl` 开启 AirportItlwm 的
+当前源码默认在特征码命中时应用 LE 广播、扫描、RPA 和 FastConnect A2DP 补丁。`-itlawdl` 开启 AirportItlwm 的
 AWDL，蓝牙补丁独立按自己的默认设置运行。旧版以随包说明为准。
 
 | 参数 | 作用 |
 |---|---|
+| `-btlfxa2dpcheck` | 搭配 `-btlfxnointel` 时，单独启用 FastConnect A2DP 的 Read Clock 应对补丁。 |
 | `-btlfxadvsets` | 搭配 `-btlfxnointel` 时，单独重新启用 LE 扩展广播和扫描补丁。 |
 | `-btlfxnodup` | 启用 LE 扫描补丁时，在匹配的 Sonoma、Sequoia 和 Tahoe 版本上关闭控制器重复过滤（实验性）。 |
 | `-btlfxrpa` | 搭配 `-btlfxnointel` 时，单独重新启用私有地址过滤列表补丁。 |

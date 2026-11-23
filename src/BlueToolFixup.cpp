@@ -171,7 +171,7 @@ static const uint8_t kBadChipsetCheckPatched15_4[] =
 // This results in the infamous "connected but no sound" issue for these devices.
 // See: https://github.com/OpenIntelWireless/IntelBluetoothFirmware/issues/462
 // We patch the Fast-Connect A2DP gate to unconditionally force the success path.
-// Activated by boot-arg -btlfxa2dpcheck
+// Enabled with the default Intel patches. -btlfxa2dpcheck can enable it separately.
 
 // Apple FastConnect A2DP reconnect gate.
 // Replaces "test r14d, r14d; je" with "xor r14d, r14d; jmp" to
@@ -1040,7 +1040,7 @@ static void pluginStart() {
             shouldPatchAddress = checkKernelArgument("-btlfxallowanyaddr");
         if (getKernelVersion() <= KernelVersion::Sonoma)
             shouldPatchNvramCheck = checkKernelArgument("-btlfxnvramcheck");
-        shouldPatchA2DPCheck = checkKernelArgument("-btlfxa2dpcheck");
+        shouldPatchA2DPCheck = intelAirDrop || checkKernelArgument("-btlfxa2dpcheck");
         shouldPatchSpecAdvSets = intelAirDrop || checkKernelArgument("-btlfxadvsets");
         shouldPatchScanDuplicates = shouldPatchSpecAdvSets && checkKernelArgument("-btlfxnodup");
         if (shouldPatchSpecAdvSets)

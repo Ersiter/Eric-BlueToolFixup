@@ -45,12 +45,13 @@ BlueToolFixup runs independently of AirportItlwm. AirDrop transfers also need wo
 
 ### Boot arguments
 
-On the current source, BlueToolFixup tries the LE advertising, scanning and RPA patches by default when
+On the current source, BlueToolFixup tries the LE advertising, scanning, RPA and FastConnect A2DP patches by default when
 their signatures match. `-itlawdl` enables AWDL in AirportItlwm. The Bluetooth defaults apply independently.
 Follow the package note when using an older build.
 
 | Argument | Effect |
 |---|---|
+| `-btlfxa2dpcheck` | Re-enable the FastConnect A2DP Read Clock workaround with `-btlfxnointel`. |
 | `-btlfxadvsets` | Re-enable the LE advertising and scanning patches with `-btlfxnointel`. |
 | `-btlfxnodup` | With LE scanning patches active, disable controller duplicate filtering on matching Sonoma, Sequoia and Tahoe builds (experimental). |
 | `-btlfxrpa` | Re-enable the private-address filter-list patches with `-btlfxnointel`. |
