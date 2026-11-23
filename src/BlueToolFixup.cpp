@@ -642,7 +642,35 @@ static bool shouldPatchAddress = false;
 static bool shouldPatchNvramCheck = false;
 static bool shouldPatchA2DPCheck = false;
 static bool loggedA2DPCheckMiss = false;
+// Exact extended scan setup patches from ForbiddenItlwm 4d65bff.
+static const uint8_t kTahoeDupFind[] = {
+    0x41,0xf6,0xc6,0x01, 0x75,0x0e, 0xf6,0x85,0x18,0xfe,0xff,0xff,0x01, 0x74,0x05, 0x45,0x31,0xf6, 0xeb,0x0b,
+    0x41,0xf6,0xd6, 0x41,0x80,0xe6,0x01, 0x45,0x88,0x75,0x00, 0x45,0x88,0x75,0x03 };
+static const uint8_t kTahoeDupReplace[] = {
+    0x41,0xf6,0xd6, 0x41,0x80,0xe6,0x01, 0x45,0x88,0x75,0x00, 0x41,0xc6,0x45,0x03,0x00, 0xeb,0x11,
+    0xeb,0x0b, 0x41,0xf6,0xd6, 0x41,0x80,0xe6,0x01, 0x45,0x88,0x75,0x00, 0x45,0x88,0x75,0x03 };
+static_assert(sizeof(kTahoeDupFind) == sizeof(kTahoeDupReplace), "scan filter patch size");
+static const uint8_t kSequoiaDupFind[] = {
+    0xf6,0x85,0x00,0xfe,0xff,0xff,0x01,0x75,0x0d,0xf6,0x85,0x28,0xfe,0xff,0xff,0x01,
+    0x74,0x04,0x31,0xc0,0xeb,0x0b,0x8b,0x85,0xf8,0xfd,0xff,0xff,0x34,0x01,0x41,0x88,
+    0x07,0x41,0x88,0x47,0x03 };
+static const uint8_t kSequoiaDupReplace[] = {
+    0x8b,0x85,0xf8,0xfd,0xff,0xff,0x34,0x01,0x41,0x88,0x07,0x41,0xc6,0x47,0x03,0x00,
+    0xeb,0x13,0x31,0xc0,0xeb,0x0b,0x8b,0x85,0xf8,0xfd,0xff,0xff,0x34,0x01,0x41,0x88,
+    0x07,0x41,0x88,0x47,0x03 };
+static_assert(sizeof(kSequoiaDupFind) == sizeof(kSequoiaDupReplace), "scan filter patch size");
+static const uint8_t kSonomaDupFind[] = {
+    0x80,0xbd,0x04,0xfe,0xff,0xff,0x00,0x75,0x0d,0x80,0xbd,0x10,0xfe,0xff,0xff,0x00,
+    0x74,0x04,0x31,0xc0,0xeb,0x0a,0x8b,0x85,0x04,0xfe,0xff,0xff,0x34,0x01,0x88,0x03,
+    0x88,0x43,0x03 };
+static const uint8_t kSonomaDupReplace[] = {
+    0x8b,0x85,0x04,0xfe,0xff,0xff,0x34,0x01,0x88,0x03,0xc6,0x43,0x03,0x00,0xeb,0x13,
+    0x74,0x04,0x31,0xc0,0xeb,0x0a,0x8b,0x85,0x04,0xfe,0xff,0xff,0x34,0x01,0x88,0x03,
+    0x88,0x43,0x03 };
+static_assert(sizeof(kSonomaDupFind) == sizeof(kSonomaDupReplace), "scan filter patch size");
+
 static bool shouldPatchSpecAdvSets = false;
+static bool shouldPatchScanDuplicates = false;
 
 static constexpr size_t kBoardIdSize = sizeof("Mac-F60DEB81FF30ACF6");
 static constexpr size_t kBoardIdSizeLegacy = sizeof("Mac-F22586C8");
@@ -850,6 +878,27 @@ static void patched_cs_validate_page(vnode_t vp, memory_object_t pager, memory_o
                 patched |= searchAndPatch(data, PAGE_SIZE, path, boardIdsWithUSBBluetooth[0], kBoardIdSize, BaseDeviceInfo::get().boardIdentifier, kBoardIdSize);
             if (shouldPatchAddress)
                 patched |= searchAndPatchWithMask(data, PAGE_SIZE, path, kSkipAddressCheckOriginal, kSkipAddressCheckMask, kSkipAddressCheckPatched, kSkipAddressCheckMask);
+            if (shouldPatchScanDuplicates) {
+                static const struct {
+                    KernelVersion kernel;
+                    const uint8_t *find, *replace;
+                    size_t size;
+                } scanFilters[] = {
+                    {KernelVersion::Tahoe, kTahoeDupFind, kTahoeDupReplace, sizeof(kTahoeDupFind)},
+                    {KernelVersion::Sequoia, kSequoiaDupFind, kSequoiaDupReplace, sizeof(kSequoiaDupFind)},
+                    {KernelVersion::Sonoma, kSonomaDupFind, kSonomaDupReplace, sizeof(kSonomaDupFind)}
+                };
+                for (const auto &filter : scanFilters) {
+                    if (getKernelVersion() != filter.kernel)
+                        continue;
+                    if (KernelPatcher::findAndReplace(const_cast<void *>(data), PAGE_SIZE,
+                            filter.find, filter.size, filter.replace, filter.size)) {
+                        SYSLOG(MODULE_SHORT, "[scan] disabled extended scan duplicate filtering in %s", path);
+                        patched = true;
+                    }
+                    break;
+                }
+            }
             if (shouldPatchA2DPCheck) {
                 bool a2dpPatched = false;
                 // macOS 14.x/15.x/26.x (Sonoma/Sequoia/Tahoe) pattern
@@ -993,6 +1042,7 @@ static void pluginStart() {
             shouldPatchNvramCheck = checkKernelArgument("-btlfxnvramcheck");
         shouldPatchA2DPCheck = checkKernelArgument("-btlfxa2dpcheck");
         shouldPatchSpecAdvSets = intelAirDrop || checkKernelArgument("-btlfxadvsets");
+        shouldPatchScanDuplicates = shouldPatchSpecAdvSets && checkKernelArgument("-btlfxnodup");
         if (shouldPatchSpecAdvSets)
             SYSLOG(MODULE_SHORT, "[advsets] extended LE advertising and scanning patches enabled");
         if (shouldPatchA2DPCheck)

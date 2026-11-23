@@ -43,6 +43,7 @@ AWDL，蓝牙补丁独立按自己的默认设置运行。旧版以随包说明�
 | 参数 | 作用 |
 |---|---|
 | `-btlfxadvsets` | 搭配 `-btlfxnointel` 时，单独重新启用 LE 扩展广播和扫描补丁。 |
+| `-btlfxnodup` | 启用 LE 扫描补丁时，在匹配的 Sonoma、Sequoia 和 Tahoe 版本上关闭控制器重复过滤（实验性）。 |
 | `-btlfxrpa` | 搭配 `-btlfxnointel` 时，单独重新启用私有地址过滤列表补丁。 |
 | `-btlfxnointel` | 关掉默认的 Intel 补丁，单项参数仍能打开对应功能。 |
 | `-btlfxoff` | 关闭 BlueToolFixup。 |

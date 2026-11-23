@@ -52,6 +52,7 @@ Follow the package note when using an older build.
 | Argument | Effect |
 |---|---|
 | `-btlfxadvsets` | Re-enable the LE advertising and scanning patches with `-btlfxnointel`. |
+| `-btlfxnodup` | With LE scanning patches active, disable controller duplicate filtering on matching Sonoma, Sequoia and Tahoe builds (experimental). |
 | `-btlfxrpa` | Re-enable the private-address filter-list patches with `-btlfxnointel`. |
 | `-btlfxnointel` | Turn off the default Intel patches. Individual switches can still enable their own paths. |
 | `-btlfxoff` | Turn off BlueToolFixup. |
