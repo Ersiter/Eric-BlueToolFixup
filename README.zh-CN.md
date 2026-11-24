@@ -87,5 +87,5 @@ kext 在构建目录下的 `products/Debug/BlueToolFixup.kext`。发布的 Relea
 
 ## 许可
 
-BlueToolFixup 基础代码沿用 [BrcmPatchRAM 的 GPL-2.0 许可证](LICENSES/BrcmPatchRAM-GPL-2.0.txt)。
+BlueToolFixup 基础代码沿用 [BrcmPatchRAM 的 GPL-2.0 许可证](LICENSE)。
 第三方补丁参考在相应源码位置署名。

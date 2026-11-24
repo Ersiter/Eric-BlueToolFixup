@@ -98,5 +98,5 @@ with the BLE changes needed by Eric-AirportItlwm on Intel Bluetooth.
 
 ## License
 
-The BlueToolFixup base retains [BrcmPatchRAM's GPL-2.0 license](LICENSES/BrcmPatchRAM-GPL-2.0.txt).
+The BlueToolFixup base retains [BrcmPatchRAM's GPL-2.0 license](LICENSE).
 Third-party patch references are credited at the relevant source sites.
